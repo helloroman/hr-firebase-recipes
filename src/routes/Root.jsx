@@ -20,8 +20,8 @@ const Root = () => {
       </nav>
       <div className="layout__login">
         {user ? <Typography>Hello <strong>{user.displayName}!</strong></Typography> : null}
-        <Button variant="contained" onClick={handleSignIn}>Sign in</Button>
-        <Button variant="contained" onClick={handleSignOut}>Sign out</Button>
+        <Button className="layout__button" variant="contained" onClick={handleSignIn}>Sign in</Button>
+        <Button className="layout__button" variant="contained" onClick={handleSignOut}>Sign out</Button>
       </div>
       <Outlet />
     </div>

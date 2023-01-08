@@ -5,24 +5,28 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   font-family: Helvetica, sans-serif;
-}
 
-.layout__login {
-  display: flex;
-  align-items: center;
-  justify-self: end;
+  &__login {
+    display: flex;
+    align-items: center;
+    justify-self: end;
 
-  button {
-    margin-left: 20px;
+    button {
+      margin-left: 20px;
+    }
   }
-}
 
-.layout__navigation {
-  font-size: 20px;
+  &__navigation {
+    font-size: 20px;
 
-  a {
-    margin-right: 20px;
-    color: black;
-    font-weight: bold;
+    a {
+      margin-right: 20px;
+      color: black;
+      font-weight: bold;
+    }
+  }
+
+  &__button {
+    background-color: black !important;
   }
 }
