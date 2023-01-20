@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {onAuthStateChanged, signInWithPopup, signOut} from "firebase/auth";
 import {auth, provider} from "../main.jsx";
 
@@ -7,13 +7,20 @@ const AuthContext = React.createContext({});
 export const AuthProvider = ({children}) => {
   const [user, setUserData] = useState(null);
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      setUserData(user);
-    } else {
-      setUserData(null);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserData(user);
+      } else {
+        setUserData(null);
+      }
+    });
+
+    return () => {
+      unsub();
     }
-  });
+  }, [user])
+
 
   const handleSignIn = async () => {
     try {

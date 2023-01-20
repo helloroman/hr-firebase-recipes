@@ -1,56 +1,57 @@
 import React, {useEffect, useState} from 'react';
 import './Posts.styles.scss';
-import {ArrowCircleUp} from "@mui/icons-material";
-import { uploadBytes, ref, getDownloadURL, listAll } from 'firebase/storage';
-import { storage } from "../main.jsx";
+import { onSnapshot, query, collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import {db} from "../main.jsx";
+import {useAuth} from "../providers/AuthProvider.jsx";
 
 export const Posts = () => {
-  const [image, setImage] = useState(null);
-  const [gallery, setGallery] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     (async () => {
-      const imagesListRef = await listAll(ref(storage, `images/`));
-      const imagesList = await imagesListRef.items.reduce(async (acc, item) => {
-        const urlList = await acc;
-        const url = await getDownloadURL(item);
-        urlList.push(url);
-        return urlList;
-      }, Promise.resolve([]));
-      console.log(imagesList);
-      setGallery(prev => [...prev, ...imagesList]);
+      const postsQuery = query(collection(db, 'posts'))
+      const unsub = onSnapshot(postsQuery, postsSnapshot => {
+        const postsData = postsSnapshot.docs.map(item => {
+          return {
+            id: item.id,
+            ...item.data(),
+          }
+        });
+        setPosts(postsData);
+      })
+
+      return () => unsub();
     })();
   }, []);
 
-  const handleSelectImage = (e) => {
-    setImage(e.target.files[0]);
+  const handleAddLike = async (id) => {
+    const postRef = doc(db, 'posts', id);
+    await updateDoc(postRef, {
+      likes: arrayUnion(user.uid),
+    })
   }
 
-  const handleUploadImage = async (e) => {
-    e.preventDefault();
-    if (!image) return;
-
-    try {
-      const imageRef = ref(storage, `images/${image.name}`);
-      const snapshot = await uploadBytes(imageRef, image);
-      const url = await getDownloadURL(snapshot.ref);
-      setGallery(prev => [...prev, url]);
-    } catch (e) {
-      console.log(e);
-    }
+  const handleRemoveLike = async (id) => {
+    const postRef = doc(db, 'posts', id);
+    await updateDoc(postRef, {
+      likes: arrayRemove(user.uid),
+    })
   }
 
   return (
     <div className="posts">
-      <form className="posts__form form" onSubmit={handleUploadImage}>
-        <h2>Send something cool!</h2>
-        <label className="form__label" htmlFor="file"><ArrowCircleUp /> Upload photo</label>
-        <input className="form__input" type="file" name="file" id="file" onChange={handleSelectImage} />
-        <button className="form__button" type="submit" disabled={!image}>Submit</button>
-      </form>
-      <div className="content">
-        {gallery.map(imageSrc => <img src={imageSrc} key={imageSrc.substring(imageSrc.length - 10)} alt=""/>)}
-      </div>
+        {posts.map(item => (
+          <div className="post" key={item.id}>
+            <h2>{item.title}</h2>
+            <p>{item.content}</p>
+            {item.likes.length && item.likes.includes(user.uid) ?
+              <button className="posts__button" onClick={() => handleRemoveLike(item.id)}>{item.likes.length} 🖤 Unlike</button>
+              :
+              <button className="posts__button" onClick={() => handleAddLike(item.id)}>{item.likes.length} ❤️ Like</button>
+            }
+          </div>
+        ))}
     </div>
   )
 };
